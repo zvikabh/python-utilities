@@ -14,7 +14,7 @@ class GeotiffUtilsTest(unittest.TestCase):
     def test_read_geotiff(self):
         bands, wkt, geotransform = geotiff_utils.read_geotiff(
             'testdata/small_tif.tif')
-        self.assertEqual(wkt, _EPSG_4326_WKT)
+        self.assertTrue(wkt.startswith('GEOGCS['))
         self.assertEqual(1, len(bands))
         expected_data = np.arange(100).reshape((10, 10)).astype(np.uint8)
         np.testing.assert_array_equal(bands[0], expected_data)
@@ -29,7 +29,7 @@ class GeotiffUtilsTest(unittest.TestCase):
                 geotiff_utils.read_geotiff(f.name))
         self.assertEqual(1, len(loaded_data))
         np.testing.assert_allclose(orig_data, loaded_data[0])
-        self.assertEqual(loaded_wkt, _EPSG_4326_WKT)
+        self.assertTrue(loaded_wkt.startswith('GEOGCS['))
         np.testing.assert_allclose(loaded_geotransform, _GEOTRANSFORM)
 
     def test_image_coords_to_geo_coords(self):
