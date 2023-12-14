@@ -27,6 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install numpy==1.24.2  # Must precede GDAL
         sudo apt-add-repository ppa:ubuntugis/ppa
         sudo apt-get update
         sudo apt-get install gdal-bin libgdal-dev
