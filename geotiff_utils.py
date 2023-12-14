@@ -13,6 +13,8 @@ def read_geotiff(
     Returns:
       image_bands: List of MaskedArrays, one for each band.
       wkt_projection: WKT string for the GeoTIFF projection.
+      geotransform: 6-element vector defining the relation between image pixels
+        and the coordinate reference system (CRS).
     """
     dataset = gdal.Open(filename)
     wkt_projection = dataset.GetProjection()
