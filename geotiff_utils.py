@@ -1,3 +1,5 @@
+import uuid
+
 import numpy as np
 from osgeo import gdal
 
@@ -17,6 +19,46 @@ def read_geotiff(
         and the coordinate reference system (CRS).
     """
     dataset = gdal.Open(filename)
+    return _parse_geotiff_from_gdal_dataset(dataset)
+
+
+def parse_geotiff(
+    data: bytes
+) -> tuple[list[np.ma.MaskedArray], str, tuple[float, ...]]:
+    """Parses a GeoTIFF which has already been loaded in memory.
+    
+    This is useful, for example, when reading from a nonstandard file system,
+    such as GCS or S3.
+
+    Args:
+      data: Encoded GeoTIFF.
+
+    Returns:
+      image_bands: List of MaskedArrays, one for each band.
+      wkt_projection: WKT string for the GeoTIFF projection.
+      geotransform: 6-element vector defining the relation between image pixels
+        and the coordinate reference system (CRS).
+    """
+    mmap_filename = f'/vsimem/{uuid.uuid4().hex}.tif'
+    gdal.FileFromMemBuffer(mmap_filename, data)
+    dataset = gdal.Open(mmap_filename)
+    image_bands, wkt_projection, geotransform = (
+        _parse_geotiff_from_gdal_dataset(dataset))
+    dataset = None  # Call destructor on the C++ Dataset object.
+    gdal.Unlink(mmap_filename)
+    return image_bands, wkt_projection, geotransform
+
+
+def _parse_geotiff_from_gdal_dataset(
+    dataset) -> tuple[list[np.ma.MaskedArray], str, tuple[float, ...]]:
+    """Parses a GeoTIFF from a GDAL DataSet.
+    
+    Returns:
+      image_bands: List of MaskedArrays, one for each band.
+      wkt_projection: WKT string for the GeoTIFF projection.
+      geotransform: 6-element vector defining the relation between image pixels
+        and the coordinate reference system (CRS).
+    """
     wkt_projection = dataset.GetProjection()
     geo_transform = dataset.GetGeoTransform()
     image_bands = []

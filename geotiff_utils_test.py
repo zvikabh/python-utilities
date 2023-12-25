@@ -2,6 +2,7 @@ import tempfile
 import unittest
 
 import numpy as np
+from osgeo import gdal
 
 import geotiff_utils
 
@@ -11,6 +12,9 @@ _GEOTRANSFORM = (34.5, 0.1, 0.0, 32.9, 0.0, -0.1)
 
 class GeotiffUtilsTest(unittest.TestCase):
 
+    def setUp(self):
+        gdal.UseExceptions()
+
     def test_read_geotiff(self):
         bands, wkt, geotransform = geotiff_utils.read_geotiff(
             'testdata/small_tif.tif')
@@ -19,6 +23,17 @@ class GeotiffUtilsTest(unittest.TestCase):
         expected_data = np.arange(100).reshape((10, 10)).astype(np.uint8)
         np.testing.assert_array_equal(bands[0], expected_data)
         np.testing.assert_allclose(geotransform, _GEOTRANSFORM)
+    
+    def test_parse_geotiff_is_same_as_read_geotiff(self):
+        with open('testdata/small_tif.tif', 'rb') as f:
+            data = f.read()
+        bands_parse, wkt_parse, geoxform_parse = geotiff_utils.parse_geotiff(
+            data)
+        bands_read, wkt_read, geoxform_read = geotiff_utils.read_geotiff(
+            'testdata/small_tif.tif')
+        np.testing.assert_allclose(bands_parse, bands_read)
+        np.testing.assert_allclose(geoxform_parse, geoxform_read)
+        self.assertEqual(wkt_parse, wkt_read)
 
     def test_read_write_geotiff(self):
         orig_data = np.arange(100).reshape((10, 10)).astype(np.float32)
