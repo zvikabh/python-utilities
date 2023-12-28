@@ -70,12 +70,27 @@ def _parse_geotiff_from_gdal_dataset(
     return image_bands, wkt_projection, geo_transform
 
 
+def encode_geotiff(
+    data: np.ndarray | np.ma.MaskedArray,
+    wkt_projection: str,
+    geo_transform: tuple[float, ...]) -> bytearray:
+    """Writes a GeoTIFF to a `bytearray` object in memory."""
+    mmap_filename = f'/vsimem/{uuid.uuid4().hex}.tif'
+    write_geotiff(data, wkt_projection, geo_transform, mmap_filename)
+    vsifile = gdal.VSIFOpenL(mmap_filename, 'rb')
+    encoded_tiff = gdal.VSIFReadL(1, 1000000000, vsifile)
+    gdal.VSIFCloseL(vsifile)
+    gdal.Unlink(mmap_filename)
+    return encoded_tiff
+
+
 def write_geotiff(
     data: np.ndarray | np.ma.MaskedArray,
     wkt_projection: str,
     geo_transform: tuple[float, ...],
     filename: str,
 ) -> None:
+    """Writes a GeoTIFF to a file."""
     assert data.ndim == 2
     rows, cols = data.shape
     match data.dtype:

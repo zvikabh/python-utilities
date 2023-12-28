@@ -42,10 +42,21 @@ class GeotiffUtilsTest(unittest.TestCase):
                 orig_data, _EPSG_4326_WKT, _GEOTRANSFORM, f.name)
             loaded_data, loaded_wkt, loaded_geotransform = (
                 geotiff_utils.read_geotiff(f.name))
-        self.assertEqual(1, len(loaded_data))
+        self.assertEqual(1, len(loaded_data))  # Single band.
         np.testing.assert_allclose(orig_data, loaded_data[0])
         self.assertTrue(loaded_wkt.startswith('GEOGCS['))
         np.testing.assert_allclose(loaded_geotransform, _GEOTRANSFORM)
+    
+    def test_encode_and_decode_tiff_in_memory(self):
+        orig_data = np.arange(100).reshape((10, 10)).astype(np.float32)
+        encoded_tiff = geotiff_utils.encode_geotiff(
+            orig_data, _EPSG_4326_WKT, _GEOTRANSFORM)
+        decoded_data, decoded_wkt, decoded_geotransform = (
+            geotiff_utils.parse_geotiff(encoded_tiff))
+        self.assertEqual(1, len(decoded_data))  # Single band.
+        np.testing.assert_allclose(orig_data, decoded_data[0])
+        np.testing.assert_allclose(decoded_geotransform, _GEOTRANSFORM)
+        self.assertTrue(decoded_wkt.startswith('GEOGCS['))
 
     def test_image_coords_to_geo_coords(self):
         np.testing.assert_allclose(
