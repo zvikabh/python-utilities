@@ -103,6 +103,7 @@ def write_geotiff(
         case np.uint16 | np.uint8:
             gdal_type = gdal.GDT_UInt16
             no_data_value = 65534
+            data = data.astype(np.uint16)  # GDAL does not support UInt8.
         case np.bool_:
             gdal_type = gdal.GDT_Int8
             no_data_value = 64
